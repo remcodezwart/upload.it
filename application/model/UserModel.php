@@ -452,6 +452,10 @@ class UserModel
             return false;
             exit();
         }
+        if (!file_exists('../uploads/'.$result->real_name_of_file)) {
+            return false;
+            exit();
+        }
         $fileContent = file_get_contents('../uploads/'.$result->real_name_of_file);
         $displayContent = array($fileContent);
         array_walk_recursive($displayContent, 'Filter::XSSFilter');
