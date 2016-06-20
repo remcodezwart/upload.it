@@ -139,7 +139,7 @@ class UserController extends Controller
         if (!Csrf::isTokenValid()) {
             LoginModel::logout();
             Redirect::home();
-           exit();
+            exit();
         }
         $result = UserModel::deleteFile();
         if ($result) {
@@ -154,5 +154,41 @@ class UserController extends Controller
             'file' => userModel::getContentOfFile(),
         ));
 
+    }
+    public function saveFile()
+    {
+        if (!Csrf::isTokenValid()) {
+            LoginModel::logout();
+            Redirect::home();
+            exit();
+        }
+        $result = UserModel::saveFile();
+        Redirect::to('user/index');
+    }
+    public function download()
+    {
+        if (!isset($_GET['token'])) {
+            return false;
+            exit;
+        }
+        $token = $_GET['token'];
+
+        if (!Csrf::isTokenValid($token)) {
+            LoginModel::logout();
+            Redirect::home();
+            exit();
+        }
+        UserModel::downloadFile();
+    }
+    public function addComment()
+    {
+        if (!Csrf::isTokenValid()) {
+            LoginModel::logout();
+            Redirect::home();
+            exit();
+        }
+
+        UserModel::addComment();
+        Redirect::to('user/index');
     }
 }

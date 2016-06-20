@@ -326,11 +326,6 @@ class UserModel
      */
     public static function uploadFile()
     {
-        if (!is_uploaded_file($_FILES['file']['tmp_name'])) {
-            return false;
-            exit();
-        }
-
         $database = DatabaseFactory::getFactory()->getConnection();
         $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
 
@@ -342,6 +337,7 @@ class UserModel
             return false;
             exit();
         }
+ 
         if (!isset($_FILES['file'])) {
             return false;
             exit();
@@ -367,25 +363,36 @@ class UserModel
         $realFileName = str_replace($forbiddenCharachters,"",$_FILES['file']['name']);
         preg_match("/(?:\W.+)\w/",$realFileName,$extension);
 
-        if ($extension[0] == ".txt" || $extension[0] == ".html" ||$extension[0] == ".htm" ||$extension[0] == ".php"||   $extension[0] == ".zip"  || $extension[0] == ".docb" || $extension[0] == ".dotx " ||
+        if ($extension[0] == ".txt" || $extension[0] == ".html" ||$extension[0] == ".htm" ||$extension[0] == ".php" ||   $extension[0] == ".zip"  || $extension[0] == ".docb" || $extension[0] == ".dotx " ||
             $extension[0] == ".docx" || $extension[0] == ".doc"  || $extension[0]  == ".dot" || $extension[0] == ".ppt"||
             $extension[0] == ".pot"  || $extension[0] == ".pps"  || $extension[0]  == ".pptx" ||
             $extension[0] == ".pptm" || $extension[0] == ".ppsx" || $extension[0]  == ".ppsm" ||
             $extension[0] == ".sldx" || $extension[0] == ".sldm" || $extension[0]  == ".potx" || 
             $extension[0] == ".potm" || $extension[0] == ".ppam") {
-                     
-            $query = $database->prepare("INSERT INTO file (users_id,fake_name_of_file,real_name_of_file)  VALUES  (:user_id,:fakeName,:realName) ");
-            $query->execute(array(':user_id' => $userId, ':fakeName' => $fakeFileName, ':realName' => $realFileName));
-           
-            $last_id = $database->lastInsertId().$extension[0];
+            
+            while (true) {  
+                $randomNumbers = "";
+                $numbers = "qwertyuioplkjhgfdsazxcvbnm"; //the charachters a to z for a random hash
+                $number = mt_rand(20,30);
 
-            $query = $database->prepare("UPDATE file set real_name_of_file=:fileName  WHERE id=:lastId");
-            $query->execute(array(':fileName' => $last_id,':lastId' => $last_id));
+                for ($amout=0; $amout < $number; $amout++) { 
+                    $letter = mt_rand(0,25);
+                    $randomNumbers .= $numbers[$letter];
+                }
+
+                $hash = $randomNumbers.$number.$extension[0];
+                if (!file_exists('../uploads/'.$hash)) {
+                    clearstatcache();
+                    break;               
+                } 
+            }
+            $query = $database->prepare("INSERT INTO file (users_id,fake_name_of_file,real_name_of_file)  VALUES  (:user_id,:fakeName,:realName) ");
+            $query->execute(array(':user_id' => $userId, ':fakeName' => $fakeFileName, ':realName' => $hash));
+
 
             $tmp_name = $_FILES["file"]["tmp_name"];
  
-            move_uploaded_file($tmp_name, "../uploads/$last_id");
-
+            move_uploaded_file($tmp_name, "../uploads/$hash");
             return true;
         } else {
             return false;
@@ -398,6 +405,7 @@ class UserModel
         $query->execute(array(':active' => "1"));
 
         $result = $query->fetchAll();
+
         array_walk_recursive($result, 'Filter::XSSFilter');
         $databse = null;
         return $result;
@@ -453,13 +461,21 @@ class UserModel
             exit();
         }
         if (!file_exists('../uploads/'.$result->real_name_of_file)) {
+            clearstatcache();
             return false;
             exit();
         }
+        clearstatcache();
         $fileContent = file_get_contents('../uploads/'.$result->real_name_of_file);
+        clearstatcache();
         $displayContent = array($fileContent);
         array_walk_recursive($displayContent, 'Filter::XSSFilter');
         $database = null;
+
+        if ($displayContent[0] == null|| $displayContent[0] == "") {
+            $displayContent[0] = "not editable file";
+        }
+
         return $displayContent;
     }
     public static function downloadFile()
@@ -467,7 +483,9 @@ class UserModel
         if (isset($_GET['file'])) {
             $file = $_GET['file'];
         }
-        $file = str_replace(".","",$file);//makes it so users can not get logic files from the server by going up maps
+        $file = str_replace("\\","",$file);
+        $file = str_replace("/","",$file);//makes it so users can not get logic files from the server by going up maps
+        clearstatcache();
         if (file_exists('../uploads/'.$file)) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/octet-stream');
@@ -478,6 +496,104 @@ class UserModel
             header('Content-Length: ' . filesize("../uploads/" . $file));
             readfile("../uploads/".$file);
             return $file;
+        }
+    }
+    
+    public static function saveFile()
+    {
+        $file = $_POST['id'];
+        $file = str_replace("\\","",$file);
+        $file = str_replace("/","",$file);
+
+        $value = filter_var($_POST['value'], FILTER_SANITIZE_STRING);
+
+        $database = DatabaseFactory::getFactory()->getConnection();
+        $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
+
+        $query = $database->prepare("SELECT users.edit_permission FROM users WHERE user_id=:id LIMIT 1 ");
+        $query->execute(array(':id' => $userId));
+        $result = $query->fetch();
+
+        if (!$result) {
+            Session::add('feedback_negative', Text::get('NO PERMISSION TO EDIT'));
+            return false;
+            exit();
+        }
+        $query = $database->prepare("SELECT * FROM file WHERE id=:id LIMIT 1 ");
+        $query->execute(array(':id' => $file));
+        $result = $query->fetch();
+        var_dump($result);
+        if ($result->users_id != $userId) {
+            Session::add('feedback_negative', Text::get('NOT_OWNER'));
+            return false;
+            exit();
+        }
+
+
+
+        clearstatcache();
+        if (!file_exists('../uploads/'.$result->real_name_of_file)) {
+            Session::add('feedback_negative', Text::get('FILE_DOES_NOT_EXSIST'));
+            return false;
+            exit();
+        }
+        if ($value === null||$value == "") {
+            Session::add('feedback_negative', Text::get('EMPTY_STRINGS'));
+            return false;
+            exit();
+        }
+
+        exit();
+        return true;
+    }
+    public static function addComment()
+    {
+        if (!isset($_POST['comment'])) {
+            Session::add('feedback_negative', Text::get('FEEDBACK_UNKNOWN_ERROR'));
+            return false;
+            exit();
+        }
+        if (!isset($_POST['id'])) {
+            Session::add('feedback_negative', Text::get('FEEDBACK_UNKNOWN_ERROR'));
+            return false;
+            exit();
+        }
+
+        $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
+        $database = DatabaseFactory::getFactory()->getConnection();
+        $query = $database->prepare("SELECT file.users_id FROM file WHERE users_id=:user_id AND id=:id");
+        $query->execute(array(':user_id' => $userId,':id' => $_POST['id']));
+        $result = $query->fetch();
+
+        if ($userId !== $result->users_id) {
+            Session::add('feedback_negative', Text::get('NOT_OWNER'));
+            return false;
+            exit();
+        }
+        $comment = filter_var($_POST['comment'], FILTER_SANITIZE_STRING);
+        if ($_POST['reset'] == "on") {
+            $comment = "deze gebruiker heeft nog geen beschrijving toegevoegd aan zijn/haar bestand";
+        }
+        if ($comment == "") {
+            Session::add('feedback_negative', Text::get('EMPTY_COMMENT'));
+            return false;
+            exit();
+        }
+
+        $query = $database->prepare("UPDATE file SET discription=:discription WHERE users_id=:user_id AND id=:id");
+        $query->execute(array(':discription' => $comment,':user_id' => $userId,':id' => $_POST['id']));
+        $database = null;
+
+        return true;
+
+    }
+    public static function currentId($id)
+    {
+        $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
+        if ($id === $userId) {
+            return true;
+        } else {
+            return false;
         }
     }
 }
