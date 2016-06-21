@@ -344,6 +344,10 @@ class UserModel
         }
         $fakeFileName = $_FILES['file']['name'];
 
+        $query = $database->prepare("SELECT users.upload_permission FROM file WHERE fake_name_of_file=:fakeName LIMIT 1");
+        $query->execute(array(':fakeName' => $fakeFileName));
+        $result = $query->fetch();
+
         if (empty($_FILES['file']) || $_FILES['file'] === null) {
             return false;
             exit();
@@ -363,40 +367,17 @@ class UserModel
         $realFileName = str_replace($forbiddenCharachters,"",$_FILES['file']['name']);
         preg_match("/(?:\W.+)\w/",$realFileName,$extension);
 
-        if ($extension[0] == ".txt" || $extension[0] == ".html" ||$extension[0] == ".htm" ||$extension[0] == ".php" ||   $extension[0] == ".zip"  || $extension[0] == ".docb" || $extension[0] == ".dotx " ||
-            $extension[0] == ".docx" || $extension[0] == ".doc"  || $extension[0]  == ".dot" || $extension[0] == ".ppt"||
-            $extension[0] == ".pot"  || $extension[0] == ".pps"  || $extension[0]  == ".pptx" ||
-            $extension[0] == ".pptm" || $extension[0] == ".ppsx" || $extension[0]  == ".ppsm" ||
-            $extension[0] == ".sldx" || $extension[0] == ".sldm" || $extension[0]  == ".potx" || 
-            $extension[0] == ".potm" || $extension[0] == ".ppam") {
-            
-            while (true) {  
-                $randomNumbers = "";
-                $numbers = "qwertyuioplkjhgfdsazxcvbnm"; //the charachters a to z for a random hash
-                $number = mt_rand(20,30);
-
-                for ($amout=0; $amout < $number; $amout++) { 
-                    $letter = mt_rand(0,25);
-                    $randomNumbers .= $numbers[$letter];
-                }
-
-                $hash = $randomNumbers.$number.$extension[0];
-                if (!file_exists('../uploads/'.$hash)) {
-                    clearstatcache();
-                    break;               
-                } 
-            }
-            $query = $database->prepare("INSERT INTO file (users_id,fake_name_of_file,real_name_of_file)  VALUES  (:user_id,:fakeName,:realName) ");
-            $query->execute(array(':user_id' => $userId, ':fakeName' => $fakeFileName, ':realName' => $hash));
-
-
-            $tmp_name = $_FILES["file"]["tmp_name"];
- 
-            move_uploaded_file($tmp_name, "../uploads/$hash");
-            return true;
-        } else {
+        $hash = self::writeFileToDatabase($extension,$fakeFileName);
+        if ($hash === false || $hash === null || $hash == "") {
+            Session::add('feedback_negative', Text::get('FEEDBACK_UNKNOWN_ERROR'));
             return false;
+            exit();
         }
+
+        $tmp_name = $_FILES["file"]["tmp_name"];
+ 
+        move_uploaded_file($tmp_name, "../uploads/$hash");
+        return true;
     }
     public static function getFiles()
     {
@@ -528,8 +509,11 @@ class UserModel
             return false;
             exit();
         }
-
-
+        if (!$result->active) {
+            Session::add('feedback_negative', Text::get('FILE_DOES_NOT_EXSIST'));
+            return false;
+            exit();
+        }
 
         clearstatcache();
         if (!file_exists('../uploads/'.$result->real_name_of_file)) {
@@ -542,7 +526,12 @@ class UserModel
             return false;
             exit();
         }
+        preg_match("/\W.*/",$result->real_name_of_file,$extension);//gets the extension of the file
+        var_dump($result);
+        $hash = self::writeFileToDatabase($extension,$result->fake_name_of_file);
 
+        var_dump($extension);
+        var_dump($hash);
         exit();
         return true;
     }
@@ -592,6 +581,38 @@ class UserModel
         $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
         if ($id === $userId) {
             return true;
+        } else {
+            return false;
+        }
+    }
+    protected static function writeFileToDatabase($extension,$fakeFileName)
+    {
+        $database = DatabaseFactory::getFactory()->getConnection();
+        $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
+
+        if ($extension[0] == ".txt"||$extension[0] == ".html"||$extension[0] == ".htm"||$extension[0] == ".php"|| $extension[0] == ".zip"||$extension[0] == ".docb"||$extension[0] == ".dotx"||$extension[0] == ".docx" || $extension[0] == ".doc"|| $extension[0] == ".dot"|| $extension[0] == ".ppt"||$extension[0] == ".pot"|| $extension[0] == ".pps"||$extension[0]  == ".pptx" ||$extension[0] == ".pptm" || $extension[0] == ".ppsx" ||$extension[0]  == ".ppsm" ||$extension[0] == ".sldx"||$extension[0] == ".sldm"||$extension[0]  == ".potx" || $extension[0] == ".potm"||$extension[0] == ".ppam") {
+        
+        while (true) {  
+            $randomNumbers = "";
+            $numbers = "qwertyuioplkjhgfdsazxcvbnm"; //the charachters a to z for a random hash
+            $number = mt_rand(20,30);
+
+            for ($amout=0; $amout < $number; $amout++) { 
+                $letter = mt_rand(0,25);
+                $randomNumbers .= $numbers[$letter];
+            }
+
+            $hash = $randomNumbers.$number.$extension[0];
+            if (!file_exists('../uploads/'.$hash)) {
+                clearstatcache();
+                break;               
+            } 
+        }
+        $query = $database->prepare("INSERT INTO file (users_id,fake_name_of_file,real_name_of_file) VALUES (:user_id,:fakeName,:realName)");
+        $query->execute(array(':user_id' => $userId, ':fakeName' => $fakeFileName, ':realName' => $hash));
+        $database = null;
+
+        return $hash;
         } else {
             return false;
         }
