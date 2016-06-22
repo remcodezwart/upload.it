@@ -416,12 +416,14 @@ class UserModel
 
         foreach ($result as $chek) {
             if ($chek != $userId) {
+                Session::add('feedback_negative', Text::get('NOT_OWNER_OF_FILE'));
                 return false;
                 exit();
             } else {
                 $query = $database->prepare("UPDATE file SET active=:active WHERE id=:id");
                 $query->execute(array('active' => "0", ':id' => $id));
                 return true;
+                exit();
             }
         }
     }
@@ -482,12 +484,30 @@ class UserModel
     
     public static function saveFile()
     {
+
         $file = $_POST['id'];
         $file = str_replace("\\","",$file);
         $file = str_replace("/","",$file);
 
-        $value = filter_var($_POST['value'], FILTER_SANITIZE_STRING);
+        $value = $_POST['value'];
+        $value = explode('<br>',  $value);
+        
+        var_dump($value);
 
+        while (true) {
+            $content = "";
+            $count = 0;
+            if (isset($value[$count])) {
+                $content .= filter_var($value[$count], FILTER_SANITIZE_STRING);
+            } else {
+                break;
+            }
+            $count++;
+        }
+
+        var_dump($value);
+        var_dump($content);
+        exit();
         $database = DatabaseFactory::getFactory()->getConnection();
         $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
 
@@ -503,7 +523,7 @@ class UserModel
         $query = $database->prepare("SELECT * FROM file WHERE id=:id LIMIT 1 ");
         $query->execute(array(':id' => $file));
         $result = $query->fetch();
-        var_dump($result);
+
         if ($result->users_id != $userId) {
             Session::add('feedback_negative', Text::get('NOT_OWNER'));
             return false;
@@ -521,18 +541,24 @@ class UserModel
             return false;
             exit();
         }
-        if ($value === null||$value == "") {
+        if ($content === null||$content == "") {
             Session::add('feedback_negative', Text::get('EMPTY_STRINGS'));
             return false;
             exit();
         }
         preg_match("/\W.*/",$result->real_name_of_file,$extension);//gets the extension of the file
-        var_dump($result);
+
         $hash = self::writeFileToDatabase($extension,$result->fake_name_of_file);
 
-        var_dump($extension);
-        var_dump($hash);
-        exit();
+        $myfile = fopen("../uploads/".$hash, "w");
+        file_put_contents("../uploads/".$hash, $_POST['value']."\n".'test nieuwe lijn');
+        
+        $query = $database->prepare("UPDATE file SET active=:active WHERE id=:id");
+        $query->execute(array(':id' => $_POST['id'],':active' => "0"));
+
+        Session::add('feedback_positive', Text::get('FILE_EDITED_SUCCES'));
+        $_POST['value'] = str_replace("<br>","\\n",$_POST['value']);
+
         return true;
     }
     public static function addComment()
@@ -603,8 +629,8 @@ class UserModel
             }
 
             $hash = $randomNumbers.$number.$extension[0];
+            clearstatcache();
             if (!file_exists('../uploads/'.$hash)) {
-                clearstatcache();
                 break;               
             } 
         }

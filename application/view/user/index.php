@@ -34,8 +34,10 @@
 			<ul class="collapsible" data-collapsible="accordion">
     			<li>
      				<div class="collapsible-header"><i class="material-icons">message</i>beschijving van het bestand <?=$fileData->fake_name_of_file?></div>
+     				<?php if (!UserModel::currentId($fileData->users_id)) { ?>
      				<div class="collapsible-body"><p><?=$fileData->discription ?></p></div>
      				<?php 
+     					}
      					if (UserModel::currentId($fileData->users_id)) { //makes it so only the user of thise file sees the comment box
      				?>
      				<form method="post" action="<?= config::get("URL"); ?>user/addComment">

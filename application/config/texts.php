@@ -10,6 +10,7 @@ return array(
 	"EMPTY_STRINGS" => "error contents of the file is empty",
 	"FEEDBACK_UNKNOWN_ERROR" => "Unknown error occurred!",
 	"NOT_OWNER" => "only the owner can change the comment",
+	"NOT_OWNER_OF_FILE" => "you are not the owner of the file so youre not allowed to remove it",
 	"EMPTY_STRING" => "all fields must be filled in",
 	"FEEDBACK_DELETED" => "Your account has been deleted.",
 	"FEEDBACK_ACCOUNT_SUSPENDED" => "Account Suspended for ",
@@ -72,5 +73,6 @@ return array(
 	"FEEDBACK_ACOUNT_DELETION_SUCCES" => "Youre acount has been succefully deleted",
 	"NO PERMISSION TO EDIT" => "you do not have permission",
 	"NOT_OWNER" => "you are not the owner of this file",
-	"FILE_DOES_NOT_EXSIST" => "This file does not exsist"
+	"FILE_DOES_NOT_EXSIST" => "This file does not exsist",
+	"FILE_EDITED_SUCCES" => "file has been successfully edited"
 );
