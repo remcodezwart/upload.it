@@ -489,25 +489,8 @@ class UserModel
         $file = str_replace("\\","",$file);
         $file = str_replace("/","",$file);
 
-        $value = $_POST['value'];
-        $value = explode('<br>',  $value);
-        
-        var_dump($value);
+        $value = filter_var($_POST['value'], FILTER_SANITIZE_STRING);
 
-        while (true) {
-            $content = "";
-            $count = 0;
-            if (isset($value[$count])) {
-                $content .= filter_var($value[$count], FILTER_SANITIZE_STRING);
-            } else {
-                break;
-            }
-            $count++;
-        }
-
-        var_dump($value);
-        var_dump($content);
-        exit();
         $database = DatabaseFactory::getFactory()->getConnection();
         $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
 
@@ -541,7 +524,7 @@ class UserModel
             return false;
             exit();
         }
-        if ($content === null||$content == "") {
+        if ($value === null||$value == "") {
             Session::add('feedback_negative', Text::get('EMPTY_STRINGS'));
             return false;
             exit();
@@ -551,13 +534,12 @@ class UserModel
         $hash = self::writeFileToDatabase($extension,$result->fake_name_of_file);
 
         $myfile = fopen("../uploads/".$hash, "w");
-        file_put_contents("../uploads/".$hash, $_POST['value']."\n".'test nieuwe lijn');
+        file_put_contents("../uploads/".$hash, $value."\n");
         
         $query = $database->prepare("UPDATE file SET active=:active WHERE id=:id");
         $query->execute(array(':id' => $_POST['id'],':active' => "0"));
 
         Session::add('feedback_positive', Text::get('FILE_EDITED_SUCCES'));
-        $_POST['value'] = str_replace("<br>","\\n",$_POST['value']);
 
         return true;
     }
