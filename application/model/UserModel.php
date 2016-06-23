@@ -498,7 +498,7 @@ class UserModel
         $query->execute(array(':id' => $userId));
         $result = $query->fetch();
 
-        if (!$result) {
+        if (!$result->edit_permission) {
             Session::add('feedback_negative', Text::get('NO PERMISSION TO EDIT'));
             return false;
             exit();
@@ -530,6 +530,12 @@ class UserModel
             exit();
         }
         preg_match("/\W.*/",$result->real_name_of_file,$extension);//gets the extension of the file
+
+        if (!$extension[0] == "html" || $extension[0] == "php" || $extension[0] == "txt") {
+            Session::add('feedback_negative', Text::get('UNSUPPORTED_FILE'));
+            return false;
+            exit();
+        }
 
         $hash = self::writeFileToDatabase($extension,$result->fake_name_of_file);
 
@@ -590,15 +596,6 @@ class UserModel
         return true;
 
     }
-    public static function currentId($id)
-    {
-        $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
-        if ($id === $userId) {
-            return true;
-        } else {
-            return false;
-        }
-    }
     protected static function writeFileToDatabase($extension,$fakeFileName)
     {
         $database = DatabaseFactory::getFactory()->getConnection();
@@ -629,6 +626,12 @@ class UserModel
         return $hash;
         } else {
             return false;
+            exit();
         }
     }
+    public static function externalDownload()
+    {
+        
+    }
+            
 }

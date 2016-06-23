@@ -37,6 +37,7 @@
             </div>
         <?php };
          if (Session::userIsLoggedIn()) { ?>
+            <h3>u bent ingelogd als <small><?=session::get('user_name')?></small></h3>
             <nav class="deep-purple accent-4">
                 <!-- my account -->
                 <ul>

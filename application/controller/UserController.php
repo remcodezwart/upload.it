@@ -191,4 +191,15 @@ class UserController extends Controller
         UserModel::addComment();
         Redirect::to('user/index');
     }
+    public function externalDownload()
+    {
+        if (!Csrf::isTokenValid()) {
+            LoginModel::logout();
+            Redirect::home();
+            exit();
+        }
+
+        UserModel::externalDownload();
+        redirect::('user/index');
+    }
 }

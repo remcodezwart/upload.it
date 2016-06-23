@@ -74,5 +74,6 @@ return array(
 	"NO PERMISSION TO EDIT" => "you do not have permission",
 	"NOT_OWNER" => "you are not the owner of this file",
 	"FILE_DOES_NOT_EXSIST" => "This file does not exsist",
-	"FILE_EDITED_SUCCES" => "file has been successfully edited"
+	"FILE_EDITED_SUCCES" => "file has been successfully edited",
+	"UNSUPPORTED_FILE" => "this file type is not supported for editing were sorry :("
 );

@@ -133,4 +133,13 @@ class Session
     {
         return (self::get('user_logged_in') ? true : false);
     }
+    public static function currentId($id)
+    {
+        $userId = Usermodel::getUserIdByUsername(Session::get('user_name'));
+        if ($id === $userId) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
