@@ -534,7 +534,13 @@ class UserModel
         $hash = self::writeFileToDatabase($extension,$result->fake_name_of_file);
 
         $myfile = fopen("../uploads/".$hash, "w");
-        file_put_contents("../uploads/".$hash, $value."\n");
+
+        $fileContents = array();
+        $fileContents = explode("/n",$value);
+
+        foreach ($fileContents as $singleLine) {
+            file_put_contents("../uploads/".$hash, $singleLine."\n", FILE_APPEND | LOCK_EX);      
+        }
         
         $query = $database->prepare("UPDATE file SET active=:active WHERE id=:id");
         $query->execute(array(':id' => $_POST['id'],':active' => "0"));
