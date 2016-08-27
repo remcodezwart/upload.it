@@ -14,12 +14,13 @@
 		<tbody>
 		<?php
 			foreach ($this->files as $fileData) {
+				//var_dump($fileData);
 		?>
 			<tr>
 				<td><?=$fileData->fake_name_of_file?></td>
 				<td><a href="<?= config::get("URL"); ?>user/editRead?id=<?=$fileData->id ?>">editen/lezen</a></td>
 				<td><a href="<?= config::get("URL"); ?>user/deleteFile?id=<?=$fileData->id ?>">verwijderen</a></td>
-				<td><a href="<?= config::get("URL"); ?>user/download?token=<?= Csrf::makeToken(); ?>&file=<?=$fileData->real_name_of_file ?>" >downloaden</a></td>
+				<td><a href="<?= config::get("URL"); ?>user/download?token=<?= Csrf::makeToken(); ?>&file=<?=$fileData->real_name_of_file ?>&name=<?= $fileData->fake_name_of_file ?>" >downloaden</a></td>
 			</tr>
 		<?php
 			}

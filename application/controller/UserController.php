@@ -178,7 +178,7 @@ class UserController extends Controller
             Redirect::home();
             exit();
         }
-        UserModel::downloadFile();
+        $result = UserModel::downloadFile();
     }
     public function addComment()
     {
@@ -200,6 +200,5 @@ class UserController extends Controller
         }
 
         UserModel::externalDownload();
-        redirect::('user/index');
     }
 }

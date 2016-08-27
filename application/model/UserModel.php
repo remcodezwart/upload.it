@@ -466,13 +466,23 @@ class UserModel
         if (isset($_GET['file'])) {
             $file = $_GET['file'];
         }
+        if (isset($_GET['name'])) {
+            $name = $_GET['name'];//if provided a name store the name
+        } else {
+            $name = "geen naam";//if no name provided say there is no name
+        }
+
+
+        
         $file = str_replace("\\","",$file);
         $file = str_replace("/","",$file);//makes it so users can not get logic files from the server by going up maps
+        preg_match("/(?:\W.+)\w/",$file,$extension); // gets the extension of the file
+
         clearstatcache();
         if (file_exists('../uploads/'.$file)) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="'.basename($file).'"');
+            header('Content-Disposition: attachment; filename="'.basename($name.$extension[0]).'"');
             header('Expires: 0');
             header('Cache-Control: must-revalidate');
             header('Pragma: public');
@@ -524,6 +534,7 @@ class UserModel
             return false;
             exit();
         }
+        var_dump($result);
         if ($value === null||$value == "") {
             Session::add('feedback_negative', Text::get('EMPTY_STRINGS'));
             return false;
@@ -531,12 +542,11 @@ class UserModel
         }
         preg_match("/\W.*/",$result->real_name_of_file,$extension);//gets the extension of the file
 
-        if (!$extension[0] == "html" || $extension[0] == "php" || $extension[0] == "txt") {
+        if ($extension[0] != ".txt"||$extension[0] != ".html"||$extension[0] != ".htm"||$extension[0] != ".php") {
             Session::add('feedback_negative', Text::get('UNSUPPORTED_FILE'));
             return false;
             exit();
         }
-
         $hash = self::writeFileToDatabase($extension,$result->fake_name_of_file);
 
         $myfile = fopen("../uploads/".$hash, "w");

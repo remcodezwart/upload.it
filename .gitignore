@@ -4,5 +4,5 @@
 # don't commit all the dependencies fetched via Composer
 /vendor
 /uploads
-/public/font
-/public/fonts
+public/font/
+public/fonts/
