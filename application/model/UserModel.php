@@ -337,16 +337,13 @@ class UserModel
             return false;
             exit();
         }
- 
+
         if (!isset($_FILES['file'])) {
             return false;
             exit();
         }
-        $fakeFileName = $_FILES['file']['name'];
 
-        $query = $database->prepare("SELECT users.upload_permission FROM file WHERE fake_name_of_file=:fakeName LIMIT 1");
-        $query->execute(array(':fakeName' => $fakeFileName));
-        $result = $query->fetch();
+        $fakeFileName = $_FILES['file']['name'];
 
         if (empty($_FILES['file']) || $_FILES['file'] === null) {
             return false;
@@ -482,7 +479,7 @@ class UserModel
         if (file_exists('../uploads/'.$file)) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="'.basename($name.$extension[0]).'"');
+            header('Content-Disposition: attachment; filename="'.basename($name).'"');
             header('Expires: 0');
             header('Cache-Control: must-revalidate');
             header('Pragma: public');
@@ -494,7 +491,6 @@ class UserModel
     
     public static function saveFile()
     {
-
         $file = $_POST['id'];
         $file = str_replace("\\","",$file);
         $file = str_replace("/","",$file);
@@ -534,7 +530,7 @@ class UserModel
             return false;
             exit();
         }
-        var_dump($result);
+
         if ($value === null||$value == "") {
             Session::add('feedback_negative', Text::get('EMPTY_STRINGS'));
             return false;
@@ -629,7 +625,7 @@ class UserModel
                 break;               
             } 
         }
-        $query = $database->prepare("INSERT INTO file (users_id,fake_name_of_file,real_name_of_file) VALUES (:user_id,:fakeName,:realName)");
+        $query = $database->prepare("INSERT INTO file (users_id,fake_name_of_file,real_name_of_file, active) VALUES (:user_id,:fakeName,:realName, 1)");
         $query->execute(array(':user_id' => $userId, ':fakeName' => $fakeFileName, ':realName' => $hash));
         $database = null;
 

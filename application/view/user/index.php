@@ -14,7 +14,6 @@
 		<tbody>
 		<?php
 			foreach ($this->files as $fileData) {
-				//var_dump($fileData);
 		?>
 			<tr>
 				<td><?=$fileData->fake_name_of_file?></td>
@@ -27,39 +26,9 @@
 		?>
 		</tbody>
 	</table>
-		<?php
-			foreach ($this->files as $fileData) {
-		?>
-	<div class="row">
-		<div class="col s12 teal darken-1">
-			<ul class="collapsible" data-collapsible="accordion">
-    			<li>
-     				<div class="collapsible-header"><i class="material-icons">message</i>beschijving van het bestand <?=$fileData->fake_name_of_file?></div>
-     				<?php if (!Session::currentId($fileData->users_id)) { ?>
-     				<div class="collapsible-body"><p><?=$fileData->discription ?></p></div>
-     				<?php 
-     					}
-     					if (Session::currentId($fileData->users_id)) { //makes it so only the user of thise file sees the comment box
-     				?>
-     				<form method="post" action="<?= config::get("URL"); ?>user/addComment">
-							<input type="hidden" name="csrf_token" value="<?= Csrf::makeToken(); ?>" />
-							<input type="hidden" name="id" value="<?=$fileData->id ?>">
-							<textarea placeholder="voeg hier een comment toe" name="comment" required="true"><?=$fileData->discription ?></textarea>
-							<input type="checkbox" name="reset" id="<?=$fileData->id?>" />
-                           	<label for="<?=$fileData->id?>">een beschrijving resseten naar de standaard waarden?</label>
-							<input type="submit" value="verzenden" />
-					</form>
-					<?php 
-						}
-					?>	
-    			</li>
-    		</ul>
-		</div>
-	</div>
-		<?php
-			}
-		?>
-	<form style="min-height:100px" class="dropzone needsclick dz-clickable blue darken-4" method="post" enctype="multipart/form-data" action="<?= config::get("URL"); ?>user/uploadFile_action" id="my-awesome-dropzone">
+
+	<form style="min-height:100px" class="dz-clickable blue darken-2" method="post" enctype="multipart/form-data" action="<?= config::get("URL"); ?>user/uploadFile_action">
+		<input type="file" name="file">
 		<input type="hidden" name="csrf_token" value="<?= Csrf::makeToken(); ?>" />
 		<input type="submit" value="verzenden">
 	</form>

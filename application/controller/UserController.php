@@ -25,7 +25,7 @@ class UserController extends Controller
     {
         $this->View->render('user/index' , array(
             'files' => userModel::getFiles(),
-            ));
+        ));
     }
 
     /**
@@ -107,7 +107,7 @@ class UserController extends Controller
         }
 
         $result = UserModel::deleteUsers(
-              Session::get('user_name')
+            Session::get('user_name')
         );
 
         if ($result) {
