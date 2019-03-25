@@ -595,7 +595,7 @@ class UserModel
             exit();
         }
 
-        $query = $database->prepare("UPDATE file SET discription=:discription WHERE users_id=:user_id AND id=:id");
+        $query = $database->prepare("UPDATE file SET description=:discription WHERE users_id=:user_id AND id=:id");
         $query->execute(array(':discription' => $comment,':user_id' => $userId,':id' => $_POST['id']));
         $database = null;
 
